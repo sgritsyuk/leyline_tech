@@ -1,0 +1,78 @@
+services:
+
+  frontend-service:
+    build:
+      context: ./../frontend-service
+      dockerfile: ./../frontend-service/frontend-service.dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      REACT_APP_GATEWAY: http://localhost:8080
+
+  gateway-service:
+    build:
+      context: ./../gateway-service
+      dockerfile: ./../gateway-service/gateway-service.dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/uploads:/uploads
+      - ./data/videos:/videos
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      CORS_ORIGIN: http://localhost:3000
+      PATH_UPLOADS: /uploads
+      PATH_VIDEOS: /videos
+      MONGO_URL: mongodb://admin:password@mongodb:27017
+      MONGO_DB: leyline
+      MONGO_COLLECTION_TASKS: tasks
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq
+
+  worker-service:
+    build:
+      context: ./../worker-service
+      dockerfile: ./../worker-service/worker-service.dockerfile
+    restart: always
+    volumes:
+      - ./data/uploads:/uploads
+      - ./data/videos:/videos
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      PATH_UPLOADS: /uploads
+      PATH_VIDEOS: /videos
+      MONGO_URL: mongodb://admin:password@mongodb:27017
+      MONGO_DB: leyline
+      MONGO_COLLECTION_TASKS: tasks
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq
+
+  mongodb:
+    image: 'mongo:4.2.16-bionic'
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: users
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ./data/mongodb/:/data/db/
+      - ./mongodb-init.js:/docker-entrypoint-initdb.d/mongodb-init.js:ro
+
+  rabbitmq:
+    image: 'rabbitmq:3.9-management'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    deploy:
+      mode: replicated
+      replicas: 1
+    volumes:
+      - ./data/rabbitmq/:/var/lib/rabbitmq/

@@ -1,0 +1,12 @@
+from os import environ
+
+CORS_ORIGIN = environ['CORS_ORIGIN']
+
+PATH_UPLOADS = environ['PATH_UPLOADS']
+PATH_VIDEOS = environ['PATH_VIDEOS']
+
+MONGO_URL = environ['MONGO_URL']
+MONGO_DB = environ['MONGO_DB']
+MONGO_COLLECTION_TASKS = environ['MONGO_COLLECTION_TASKS']
+
+CELERY_BROKER_URL = environ['CELERY_BROKER_URL']
